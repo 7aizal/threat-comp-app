@@ -1,19 +1,22 @@
 resource "aws_acm_certificate" "cert" {
-  domain_name       = var.domain_name
-  validation_method = var.validation_method
+  domain_name               = var.domain_name
+  validation_method         = "DNS"
+  subject_alternative_names = var.subject_alternative_names
+
+  tags = var.tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-resource "aws_route53_record" "cert_validation" {
-  zone_id = var.route53_zone_id
+resource "aws_acm_certificate_validation" "cert_validation" {
+  certificate_arn = aws_acm_certificate.cert.arn
 
-  name    = var.domain_validation_options[0].resource_record_name
-  type    = var.domain_validation_options[0].resource_record_type
-  records =  var.domain_validation_options[0].resource_record_value
-
-  ttl = var.record_ttl
+  
+  validation_record_fqdns = [
+    for dvo in aws_acm_certificate.cert.domain_validation_options :
+    dvo.resource_record_name
+  ]
 }
-
-resource "aws_acm_certificate_validation" "cert_validation_complete" {
-  certificate_arn         = var.certificate_arn
-  validation_record_fqdns = var.validation_record_fqdns
-}
+ # this is because im using cloudflare for my dns management, this allows acm to only need the fqdns from cloudflare, cloudflare in the dns module will handle the rest.

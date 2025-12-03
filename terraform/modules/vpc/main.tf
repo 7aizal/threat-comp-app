@@ -1,63 +1,112 @@
+# vpc
 resource "aws_vpc" "main" {
-    cidr_block = var.vpc_cidr_block 
-    instance_tenancy = "default"
-    tags = {
-        Name = "threatcomp-vpc"
+  cidr_block       = var.vpc_cidr_block
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 
+  tags = merge(var.tags, {
+    Name = var.vpc_name
+  })
 }
+# public subnets
+resource "aws_subnet" "public" {
+  count = length(var.public_subnet_cidrs)
+
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = var.public_subnet_azs[count.index]
+  map_public_ip_on_launch = true
+
+  tags = merge(var.tags, {
+    Name = "${var.vpc_name}-public-${count.index + 1}"
+  })
 }
-resource "aws_subnet" "subnet2a" {
-    vpc_id            = var.vpc_id
-    cidr_block        = "var.public_subnet_cidr_2a"
-    availability_zone = var.subnet2a   
-    map_public_ip_on_launch = var.public_ip
-    tags = {
-        Name = "threatcomp-subnet-2a"
-    }
-  
+# private subnets
+resource "aws_subnet" "private" {
+  count = length(var.private_subnet_cidrs)
+
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = var.private_subnet_azs[count.index]
+
+  tags = merge(var.tags, {
+    Name = "${var.vpc_name}-private-${count.index + 1}"
+  })
 }
 
-resource "aws_subnet" "subnet2b" {
-    vpc_id            = var.vpc_id
-    cidr_block        = "var.public_subnet_cidr_2b"
-    availability_zone = var.subnet2b   
-    map_public_ip_on_launch = var.public_ip
-    tags = {
-        Name = "threatcomp-subnet-2b"
-    }
-  
-}
-
+# internet gateway
 resource "aws_internet_gateway" "igw" {
-    vpc_id = var.vpc_id
+  vpc_id = aws_vpc.main.id
 
-    tags = {
-        Name = "threatcomp-igw"
-    }
-  
+  tags = merge(var.tags, {
+    Name = "${var.vpc_name}-igw"
+  })
 }
 
+# public route table
 resource "aws_route_table" "public" {
-    vpc_id = var.vpc_id
+  vpc_id = aws_vpc.main.id
 
-    route {
-        cidr_block = "0.0.0.0/0"
-        gateway_id = var.gateway_id 
-    }
-
-    tags = {
-        Name = "threatcomp-public-rt"
-    }
-}
-resource "aws_route_table_association" "public_a" {
-    subnet_id      = var.public_subnet_ids[0]
-    route_table_id = aws_route_table.public.id  
-
-  
+  tags = merge(var.tags, {
+    Name = "${var.vpc_name}-public-rt"
+  })
 }
 
-resource "aws_route_table_association" "public_b" {
-    subnet_id      = var.public_subnet_ids[1]
-    route_table_id = aws_route_table.public.id
-  
+# route to internet gateway
+resource "aws_route" "public_internet" {
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.igw.id
+}
+
+# associating each public subnet
+resource "aws_route_table_association" "public_assoc" {
+  count = length(aws_subnet.public)
+
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+# nat gateway
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = merge(var.tags, {
+    Name = "${var.vpc_name}-nat-eip"
+  })
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+
+  tags = merge(var.tags, {
+    Name = "${var.vpc_name}-nat-gw"
+  })
+
+  depends_on = [aws_internet_gateway.igw]
+}
+
+
+# private route table
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(var.tags, {
+    Name = "${var.vpc_name}-private-rt"
+  })
+}
+
+# private nat route
+resource "aws_route" "private_nat_route" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat.id
+}
+
+# rt associations
+resource "aws_route_table_association" "private_assoc" {
+  count = length(aws_subnet.private)
+
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
 }

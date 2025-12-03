@@ -3,10 +3,7 @@ resource "aws_lb" "alb" {
   internal           = false
   load_balancer_type = var.load_balancer_type
   security_groups    = [var.alb_security_group_id]
-  subnets            = [
-    var.public_subnet_ids[0],
-    var.public_subnet_ids[1]
-  ]
+  subnets            = var.public_subnet_ids
 }
 
 resource "aws_lb_target_group" "tg" {
@@ -28,17 +25,13 @@ resource "aws_lb_target_group" "tg" {
 }
 
 resource "aws_lb_listener" "http_listener" {
-  load_balancer_arn = aws_lb.main.arn
+  load_balancer_arn = aws_lb.alb.arn
   port              = var.listener_port
   protocol          = var.listener_protocol
 
   default_action {
-    type             = "redirect"
+    type             = "forward"
     target_group_arn = aws_lb_target_group.tg.arn
-    redirect {
-      port = tostring(var.listener_port)
-          protocol = var.listener_protocol
-          status_code = "HTTP_301"
-        }
+   
   }
 }

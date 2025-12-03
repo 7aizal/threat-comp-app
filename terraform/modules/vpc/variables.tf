@@ -1,61 +1,39 @@
-variable "vpc_cidr_block" {
-  description = "CIDR block for vpc"
+variable "vpc_name" {
   type = string
-    default     = "10.0.0.0/16"
 }
 
-variable "public_subnet_ids" {
-    description = "public subnets" 
-    type = list(string)
-
+variable "vpc_cidr_block" {
+  type = string
 }
 
 variable "region" {
-    description = "AWS region"
-    type        = string
-    default     = "eu-west-2"
-  
-}
-variable "public_ip" {
-    type = string
-    default = "true"
-
+  type = string
 }
 
-variable "subnet2a" {
-    type = string
-    default = "eu-west-2a"
-  
+variable "public_subnet_cidrs" {
+  type = list(string)
 }
 
-variable "subnet2b" {
-    type = string
-    default = "eu-west-2b" 
-  
+variable "private_subnet_cidrs" {
+  type = list(string)
 }
 
-variable "public_subnet_cidr_2a" {
-    description = "Public subnet CIDR for AZ eu-west-2a"
-    type = string
-    default = "10.0.1.0/24"
-  
+variable "public_subnet_azs" {
+  type = list(string)
 }
 
-variable "public_subnet_cidr_2b" {
-    description = "Public subnet CIDR for AZ eu-west-2b"
-    type = string
-    default = "10.0.1.0/24"
+variable "private_subnet_azs" {
+  type = list(string)
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}
+
+variable "map_public_ip_on_launch" {
+  type    = bool
+  default = true
   
 }
 
-variable "vpc_id" {
-    type = string   
-    default = "aws_vpc.main.id"
-  
-}
-
-variable "gateway_id" {
-    type = string   
-    default = "aws_internet_gateway.igw.id"
-  
-}
