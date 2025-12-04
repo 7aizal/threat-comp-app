@@ -2,48 +2,76 @@
     <img src="./images/coderco.jpg" alt="CoderCo" width="300"/>
 </div>
 
-# CoderCo Assignment 1 - Open Source App Hosted on ECS with Terraform üöÄ
+# Threat Composer Application - Open Source App Hosted on ECS with Terraform üöÄ
 
 This project is based on Amazon's Threat Composer Tool, an open source tool designed to facilitate threat modeling and improve security assessments. You can explore the tool's dashboard here: [Threat Composer Tool](https://awslabs.github.io/threat-composer/workspaces/default/dashboard)
 
-## Task/Assignment üìù
+## Ì≥¶ Infrastructure Build Summary
 
-- Create your own repository and complete the task there. You may create a `app` in your repo and copy all the files in this directory into it. Or alternatively, you can use this directory as is. Your choice.
+This project demonstrates a full end-to-end deployment of a containerised application on AWS using Terraform.  
+The initial phase was built as a single `main.tf` file to ensure a strong foundational understanding of each infrastructure component before modularisation.  
 
-- Your task will be to create a container image for the app, push it to ECR (recommended) or DockerHub. Ideally, you should use a CI/CD pipeline to build, test, and push the container image.
+A summary of the first stages:
 
-- Deploy the app on ECS using Terraform. All the resources should be provisioned using Terraform. Use TF modules.
+---
 
-- Make sure the app is live on `https://tm.<your-domain>` or `https://tm.labs.<your-domain>`
+### Ì∑± **1. Core Networking (VPC Architecture)**
+- Deployed a dedicated **VPC** with two public subnets across multiple Availability Zones  
+- Configured an **Internet Gateway** and public route table  
+- Enabled external connectivity for load balancer and Fargate workloads  
 
-- App must use HTTPS. Hosted on ECS. Figure out the rest. Once app is live, add screenshots to the README.md file.
+This established the secure network foundation for the entire platform.
 
-- Add architecture diagram of how the infrastructure is setup. (Use Lucidchart or draw.io or mermaid) You are free to use any diagramming tool.
+---
 
-## Local app setup üíª
+### Ì¥ê **2. Security Controls**
+- Created separate Security Groups for the **ALB** and **ECS Tasks**
+- ALB allows controlled inbound web traffic  
+- ECS tasks only accept traffic *from the ALB*, ensuring isolation and defence-in-depth  
 
-```bash
-yarn install
-yarn build
-yarn global add serve
-serve -s build
+This follows AWS best practices for workload segmentation.
 
-#yarn start
-http://localhost:3000/workspaces/default/dashboard
+---
 
-## or
-yarn global add serve
-serve -s build
-```
+### Ìºç **3. Application Load Balancer (ALB)**
+- Launched an internet-facing **ALB** across multiple subnets  
+- Configured an HTTP listener and a Target Group with health checks  
+- Integrated the ALB with the ECS Service for traffic routing  
 
-## Useful links üîó
+This provides high availability and centralised traffic control.
 
-- [Terraform AWS Registry](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [Terraform AWS ECS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster)
-- [Terraform Docs](https://www.terraform.io/docs/index.html)
-- [ECS Docs](https://docs.aws.amazon.com/ecs/latest/userguide/what-is-ecs.html)
+---
 
-## Advice & Tips ÔøΩ
+### Ì∫Ä **4. ECS (Fargate) Compute**
+- Created an **ECS Cluster** using AWS Fargate (serverless compute)
+- Defined an **ECS Task Definition** using the ECR container image  
+- Configured non-root container execution and CloudWatch logging  
+- Deployed an **ECS Service** to manage task scaling, health, and load balancing  
 
-- This is just a simple app, you may use another app if you'd like. 
-- Use best practices for your Terraform code. Use best practices for your container image. Use best practices for your CI/CD pipeline.
+This automates container orchestration with no EC2 instances required.
+
+---
+
+### Ì¥í **5. HTTPS & Domain Integration**
+- Provisioned an **ACM certificate** for `tm.fazops.com`  
+- Automated DNS validation via Route53  
+- Added an **HTTPS listener (443)** to the ALB  
+- Mapped the domain to the ALB using a Route53 ALIAS record  
+
+This delivers secure, production-grade HTTPS access to the application.
+
+---
+
+### ÌæØ **Outcome**
+The result is a fully functional, secure, scalable, and load-balanced cloud architecture running on AWS ECS Fargate with:
+
+- Automated TLS  
+- Public domain routing  
+- Robust networking & security  
+- Containerised application delivery  
+- Infrastructure-as-Code (Terraform)
+
+This forms the foundation for the next stage: **modularising the Terraform codebase and implementing CI/CD pipelines.**
+
+---
+
