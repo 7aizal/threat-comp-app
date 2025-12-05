@@ -23,6 +23,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Get ECR URI
+        id: ecr
+        run: |
+          ECR_URI=$(aws ecr describe-repositories \
+              --repository-names threatcomp-app \
+              --query 'repositories[0].repositoryUri' \
+              --output text)
+          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -36,7 +45,8 @@ jobs:
         working-directory: ./terraform
         run: |
           terraform destroy -auto-approve \
-            -var="container_image_uri=${{ secrets.CONTAINER_IMAGE_URI }}" \
+            -var="container_image_uri=${{ env.ECR_URI }}:latest" \
             -var="cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}" \
             -var="cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -var="domain_name=${{ secrets.DOMAIN_NAME }}"
+            -var="domain_name=${{ secrets.DOMAIN_NAME }}" \
+            -var="alb_name=${{ secrets.ALB_NAME }}"

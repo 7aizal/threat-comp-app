@@ -28,6 +28,12 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Ensure ECR Repository Exists
+        id: ensure-ecr
+        run: |
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
+          aws ecr create-repository --repository-name $ECR_REPOSITORY
+
       - name: Get ECR URI
         id: ecr
         run: |
@@ -48,5 +54,5 @@ jobs:
         run: docker push $ECR_URI:latest
 
       - name: Output Image URI
-        run: | 
-            echo "Pushed image: $ECR_URI:latest"
+        run: |
+          echo "Pushed image: $ECR_URI:latest"
