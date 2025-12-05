@@ -134,11 +134,16 @@ AWS Components:
 
 * Outputs image URI
 
+  <img width="1503" height="701" alt="image" src="https://github.com/user-attachments/assets/0ab520e1-0149-4951-837c-c6012b654931" />
+
+
 ### 2. Terraform Plan
 
 * Runs automatically after build
 
 * Shows changes before deployment
+  <img width="1810" height="738" alt="image" src="https://github.com/user-attachments/assets/8ac78749-599e-4e6f-91d0-db3efd482e88" />
+
 
 ### 3. Terraform Apply (Manual Approval)
 
@@ -156,11 +161,15 @@ ACM Cert
 
 Cloudflare DNS
 
+<img width="1500" height="837" alt="image" src="https://github.com/user-attachments/assets/ebe067cb-6ab0-4f14-8d8b-33867458b550" />
+
+
 ### 4. Terraform Destroy (Manual Input “DESTROY”)
 
 Safely tears everything down
 
 Prevents AWS cost leakage
+<img width="1498" height="688" alt="image" src="https://github.com/user-attachments/assets/33cfddbc-532d-41cc-a91d-66b42563de19" />
 
 
 ## 🔐 Security Best Practices Implemented
