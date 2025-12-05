@@ -1,77 +1,237 @@
-<div align="center">
-    <img src="./images/coderco.jpg" alt="CoderCo" width="300"/>
-</div>
+# Threat Composer App — 
+## Cloud-Native Deployment on AWS ECS 
 
-# Threat Composer Application - Open Source App Hosted on ECS with Terraform 🚀
+<img width="535" alt="architecture" src="https://github.com/user-attachments/assets/da59c9f0-17c2-40ce-b7af-31610d14a3df" />
 
-This project is based on Amazon's Threat Composer Tool, an open source tool designed to facilitate threat modeling and improve security assessments. You can explore the tool's dashboard here: [Threat Composer Tool](https://awslabs.github.io/threat-composer/workspaces/default/dashboard)
+This repository contains a full production-grade deployment pipeline and cloud architecture for hosting the Threat Composer application on AWS ECS Fargate using Terraform, GitHub Actions, ECR, Cloudflare, and multi-AZ networking.
 
-## ��� Infrastructure Build Summary
+The goal of this project is to demonstrate modern DevOps engineering through:
 
-This project demonstrates a full end-to-end deployment of a containerised application on AWS using Terraform.  
-The initial phase was built as a single `main.tf` file to ensure a strong foundational understanding of each infrastructure component before modularisation.  
+* Automated Docker builds
 
-A summary of the first stages:
+* Secure ECR image storage
 
----
+* Modular Terraform IaC
 
-### ��� **1. Core Networking (VPC Architecture)**
-- Deployed a dedicated **VPC** with two public subnets across multiple Availability Zones  
-- Configured an **Internet Gateway** and public route table  
-- Enabled external connectivity for load balancer and Fargate workloads  
+* CI/CD deployments
 
-This established the secure network foundation for the entire platform.
+* A highly available AWS architecture
 
----
+* HTTPS with ACM + Cloudflare DNS
 
-### ��� **2. Security Controls**
-- Created separate Security Groups for the **ALB** and **ECS Tasks**
-- ALB allows controlled inbound web traffic  
-- ECS tasks only accept traffic *from the ALB*, ensuring isolation and defence-in-depth  
+* Multi-AZ resilience
 
-This follows AWS best practices for workload segmentation.
+## 🚀 Project Overview
 
----
+This project deploys the open-source Threat Composer UI into a secure, scalable AWS environment.
 
-### ��� **3. Application Load Balancer (ALB)**
-- Launched an internet-facing **ALB** across multiple subnets  
-- Configured an HTTP listener and a Target Group with health checks  
-- Integrated the ALB with the ECS Service for traffic routing  
+It includes:
 
-This provides high availability and centralised traffic control.
+* Fully containerised app
 
----
+* End-to-end CI/CD
 
-### ��� **4. ECS (Fargate) Compute**
-- Created an **ECS Cluster** using AWS Fargate (serverless compute)
-- Defined an **ECS Task Definition** using the ECR container image  
-- Configured non-root container execution and CloudWatch logging  
-- Deployed an **ECS Service** to manage task scaling, health, and load balancing  
+* Terraform provisioning of all infrastructure
 
-This automates container orchestration with no EC2 instances required.
+* Multi-AZ load balancing
 
----
+* Private compute with public ALB
 
-### ��� **5. HTTPS & Domain Integration**
-- Provisioned an **ACM certificate** for `tm.fazops.com`  
-- Automated DNS validation via Route53  
-- Added an **HTTPS listener (443)** to the ALB  
-- Mapped the domain to the ALB using a Route53 ALIAS record  
+* HTTPS termination
 
-This delivers secure, production-grade HTTPS access to the application.
+* Cloudflare-managed DNS
 
----
+This mirrors real production architectures used by engineering teams across the industry.
 
-### ��� **Outcome**
-The result is a fully functional, secure, scalable, and load-balanced cloud architecture running on AWS ECS Fargate with:
 
-- Automated TLS  
-- Public domain routing  
-- Robust networking & security  
-- Containerised application delivery  
-- Infrastructure-as-Code (Terraform)
+## 🧩 High-Level Architecture
+<img width="1304" alt="diagram" src="https://github.com/user-attachments/assets/c923a7be-d24c-4971-9264-9d9313e19664" />
 
-This forms the foundation for the next stage: **modularising the Terraform codebase and implementing CI/CD pipelines.**
+AWS Components:
 
----
+### Networking / VPC
 
+* VPC (10.0.0.0/16)
+
+* Two public subnets (AZa + AZb)
+
+* Two private subnets (AZa + AZb)
+
+* Internet Gateway for public ingress
+
+* NAT Gateway for private subnet egress
+
+### Compute & Load Balancing
+
+* Application Load Balancer (public)
+
+* ECS Fargate tasks inside private subnets
+
+* ALB forwards traffic to ECS Tasks
+
+* ECS pulls images from ECR
+
+### Security
+
+* ALB Security Group → allows ports 80 / 443
+
+* ECS Task Security Group → allows only ALB traffic
+
+* IAM roles for ECS + task execution
+
+* ACM TLS Certificate for tm.fazops.com
+
+### DNS
+
+* Cloudflare manages DNS
+
+* CNAME → points domain to ALB DNS
+
+* HTTPS termination handled at ALB
+
+### State & Storage
+
+* S3 backend storing Terraform state
+
+## Repository Structure
+```bash
+
+├── app/                      
+│   └── (React UI + Dockerfile)
+│
+├── terraform/                
+│   ├── main.tf
+│   ├── provider.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── terraform.tfvars
+│   └── modules/
+│       ├── vpc/
+│       ├── alb/
+│       ├── ecs/
+│       ├── acm/
+│       ├── dns/
+│       ├── iam/
+│       ├── sg/
+│       └── s3/
+│
+└── .github/
+    └── workflows/
+        ├── build.yaml
+        ├── tf-plan.yaml
+        ├── tf-apply.yaml
+        └── tf-destroy.yaml
+```
+
+## 🔄 CI/CD Pipeline Workflow
+### 1. Build & Push (Automatic on Push)
+
+* Checkout repo
+
+* Build Docker image
+
+* Push to ECR
+
+* Outputs image URI
+
+### 2. Terraform Plan
+
+* Runs automatically after build
+
+* Shows changes before deployment
+
+### 3. Terraform Apply (Manual Approval)
+
+* Deploys full infrastructure stack:
+
+* VPC, Subnets
+
+* ALB
+
+* ECS Cluster & Service
+
+* IAM Roles
+
+ACM Cert
+
+Cloudflare DNS
+
+### 4. Terraform Destroy (Manual Input “DESTROY”)
+
+Safely tears everything down
+
+Prevents AWS cost leakage
+
+
+## 🔐 Security Best Practices Implemented
+
+* Compute workloads isolated in private subnets
+
+* ALB is the only public entry point
+
+* ECS only accepts traffic from ALB SG
+
+* Terraform backend stored in secure S3 bucket
+
+* IAM least-privilege roles
+
+* HTTPS enforced with ACM
+
+* Cloudflare DNS for secure routing
+
+* GitHub Secrets used for all sensitive data
+
+## To Run Locally
+
+In order to run the app locally, using Dockerhub for development and further testing, 
+the steps taken are the following.
+```bash
+git clone https://github.com/7aizal/threat-comp-app.git
+cd threat-comp-app
+cd app
+npm install 
+npm start
+docker build -t threat-comp-app
+docker run -p 8080:8080 threat-comp-app
+```
+
+
+## 🎯 Why I Built This Project
+
+This project demonstrates:
+
+* Real-world cloud infrastructure design
+
+* ECS + ECR + ALB + Terraform integration
+
+* Production-ready CI/CD pipelines
+
+* Cloud security fundamentals
+
+* DNS + TLS provisioning
+
+* Multi-AZ high availability
+
+* End-to-end container lifecycle automation
+
+* It serves as a complete DevOps portfolio project showcasing cloud architecture and automation expertise.
+
+## ✔️ Verified Functionality
+
+* Docker builds succeed
+
+* ECR image pushes confirmed
+
+* Terraform deploys full stack
+
+* ECS tasks run successfully
+
+* ALB health checks pass
+
+* HTTPS via tm.fazops.com
+
+* Multi-AZ routing operational
+
+* Full CI/CD Automation Complete
+
+MIT License - AWS OPEN SOURCE TOOL, Feel free to use. 
