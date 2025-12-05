@@ -57,4 +57,5 @@ jobs:
         run: docker push $ECR_URI:latest
 
       - name: Output full image URI
-        run: echo "Image pushed: $ECR_URI:$GITHUB_SHA"
+        run: |
+            echo "Image pushed: $ECR_URI:$GITHUB_SHA"
