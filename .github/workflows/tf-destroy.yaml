@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_destroy:
-        description: "Type DESTROY to confirm destruction"
+        description: "Type DESTROY to confirm destroy"
         required: true
 
 jobs:
@@ -12,24 +12,23 @@ jobs:
     if: ${{ github.event.inputs.confirm_destroy == 'DESTROY' }}
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: ./terraform
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Generate terraform.tfvars from secret
+      - name: Create terraform.tfvars
+        working-directory: ./terraform
         run: |
-          echo "${{ secrets.TF_VARS }}" > terraform.tfvars
+          cat <<'EOF' > terraform.tfvars
+          ${{ secrets.TF_VARS }}
+          EOF
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -37,7 +36,9 @@ jobs:
           terraform_version: 1.5.6
 
       - name: Terraform Init
+        working-directory: ./terraform
         run: terraform init
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        working-directory: ./terraform
+        run: terraform destroy -auto-approve -var-file=terraform.tfvars

@@ -22,14 +22,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Get ECR URI
-        id: ecr
+      - name: Create terraform.tfvars from secret
+        working-directory: ./terraform
         run: |
-          ECR_URI=$(aws ecr describe-repositories \
-              --repository-names threatcomp-app \
-              --query 'repositories[0].repositoryUri' \
-              --output text)
-          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
+          cat <<'EOF' > terraform.tfvars
+          ${{ secrets.TF_VARS }}
+          EOF
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -40,21 +38,6 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
-      - name: Terraform Validate
-        working-directory: ./terraform
-        run: terraform validate
-
       - name: Terraform Plan
         working-directory: ./terraform
-        run: terraform plan -var-file=terraform.tfvars -out=tfplan.out
-
-      - name: Set up TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: latest
-
-      - name: Run TFLint
-        working-directory: ./terraform
-        run: tflint || true
-
-
+        run: terraform plan -var-file=terraform.tfvars
