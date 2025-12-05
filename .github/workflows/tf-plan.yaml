@@ -1,0 +1,67 @@
+name: Terraform Plan
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+
+jobs:
+  terraform-plan:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Get ECR URI
+        id: ecr
+        run: |
+          ECR_URI=$(aws ecr describe-repositories \
+            --repository-names threatcomp-app \
+            --query 'repositories[0].repositoryUri' \
+            --output text)
+
+          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.6
+
+      - name: Initialize Terraform
+        working-directory: ./app/terraform
+        run: terraform init
+
+      - name: Run TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+        # actual lint command:
+      - name: Execute TFLint
+        working-directory: ./app/terraform
+        run: tflint --init && tflint
+
+      - name: Run Checkov (optional security scan)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ./app/terraform
+        if: ${{ github.event.inputs.skip_checkov != 'true' }}
+
+      - name: Terraform Plan
+        working-directory: ./app/terraform
+        run: |
+          terraform plan \
+            -var="container_image_uri=${{ env.ECR_URI }}:latest" \
+            -var="cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}" \
+            -var="cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -var="domain_name=${{ secrets.DOMAIN_NAME }}"
