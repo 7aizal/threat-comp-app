@@ -1,16 +1,16 @@
-name: Terraform Apply
+name: Terraform Apply (manual approval)
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
     inputs:
-      confirm_apply:
+      apply_confirmation:
         description: "Type YES to confirm deployment"
         required: true
         default: "NO"
 
 jobs:
   terraform-apply:
-    if: ${{ github.event.inputs.confirm_apply == 'YES' }}
+    if: ${{ github.event.inputs.apply_confirmation == 'YES' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./app/terraform
-        run: terraform init -upgrade
+        run: terraform init
 
       - name: Terraform Apply
         working-directory: ./app/terraform
