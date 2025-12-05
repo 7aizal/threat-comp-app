@@ -1,11 +1,16 @@
-name: Terraform Apply
+name: Terraform Destroy
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: 'Type "DESTROY" to confirm Terraform destroy'
+        required: true
 
 jobs:
-  terraform-apply:
+  terraform-destroy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm_destroy == 'Destroy' }}
 
     steps:
 
@@ -21,15 +26,17 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.6
 
       - name: Terraform Init
         working-directory: ./app/terraform
         run: terraform init
 
-      - name: Terraform Apply
+      - name: Terraform Destroy
         working-directory: ./app/terraform
         run: |
-          terraform apply -auto-approve \
+          terraform destroy -auto-approve \
             -var="container_image_uri=${{ secrets.CONTAINER_IMAGE_URI }}" \
             -var="cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID }}" \
             -var="cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" \

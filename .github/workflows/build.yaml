@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - workflows
+  workflow_dispatch:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -34,7 +35,6 @@ jobs:
             --repository-names $ECR_REPOSITORY \
             --query 'repositories[0].repositoryUri' \
             --output text)
-
           echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
 
       - name: Build Docker image
@@ -57,6 +57,4 @@ jobs:
         run: docker push $ECR_URI:latest
 
       - name: Output full image URI
-        run: |
-            echo "Image pushed: $ECR_URI:$GITHUB_SHA"
-
+        run: echo "Image pushed: $ECR_URI:$GITHUB_SHA"
