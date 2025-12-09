@@ -89,6 +89,10 @@ module "ecs" {
   alb_security_group_id = module.sg.alb_sg_id
   alb_target_group_arn = module.alb.tg_arn
   region = var.region
+  ecs_cpu = var.ecs_cpu
+  ecs_memory = var.ecs_memory
+  
+ 
 }
 # acm
 module "acm" {
