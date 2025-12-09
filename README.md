@@ -49,7 +49,8 @@ This mirrors real production architectures used by engineering teams across the 
 
 ## AWS Components:
 
-<img width="1289" height="714" alt="image" src="https://github.com/user-attachments/assets/218946bc-0b59-41e6-be42-1c8ae93bb9bb" />
+<img width="951" height="528" alt="image" src="https://github.com/user-attachments/assets/7b7ba9c6-8165-4590-910a-4a0f19300a21" />
+
 
 
 
