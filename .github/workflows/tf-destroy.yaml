@@ -7,6 +7,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AWS_REGION: eu-west-2
+
 jobs:
   terraform-destroy:
     runs-on: ubuntu-latest
@@ -20,9 +23,19 @@ jobs:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
+      - name: Write terraform.tfvars
+        working-directory: ./terraform
+        run: |
+          cat <<'EOF' > terraform.tfvars
+              ${{ secrets.TF_VARS }}
+                        EOF
+
+      - name: Inject Cloudflare Token
+        working-directory: ./terraform
+        run: |
+          sed -i 's|cloudflare_api_token = ""|cloudflare_api_token = "${{ secrets.CLOUDFLARE_API_TOKEN }}"|' terraform.tfvars
+
       - uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.6
 
       - name: Terraform Init
         working-directory: ./terraform
@@ -30,7 +43,4 @@ jobs:
 
       - name: Terraform Destroy
         working-directory: ./terraform
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.TF_VAR_cloudflare_api_token }}
-        run: terraform destroy -auto-approve
+        run: terraform destroy -auto-approve -var-file=terraform.tfvars

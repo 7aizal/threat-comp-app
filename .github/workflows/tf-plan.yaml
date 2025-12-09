@@ -26,18 +26,19 @@ jobs:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      - name: Write terraform.tfvars from Secret
+      - name: Write terraform.tfvars safely
         working-directory: ./terraform
         run: |
-          printf "%s" "${{ secrets.TF_VARS }}" > terraform.tfvars
+          cat <<'EOF' > terraform.tfvars
+              ${{ secrets.TF_VARS }}
+                    EOF
 
       - name: Inject Cloudflare Token
         working-directory: ./terraform
         run: |
-          sed -i "s|cloudflare_api_token = \"\"|cloudflare_api_token = \"${{ secrets.CLOUDFLARE_API_TOKEN }}\"|" terraform.tfvars
+          sed -i 's|cloudflare_api_token = ""|cloudflare_api_token = "${{ secrets.CLOUDFLARE_API_TOKEN }}"|' terraform.tfvars
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
         working-directory: ./terraform
