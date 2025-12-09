@@ -17,5 +17,7 @@ variable "validation_records" {
 variable "cloudflare_api_token" {
   type        = string
   description = "Cloudflare API Token with DNS edit permissions"
+  sensitive = true
+  default = ""
   
 }

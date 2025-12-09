@@ -7,7 +7,7 @@ output "alb_dns_name" {
 
 output "target_group_arn" {
   description = "ARN of the ALB target group"
-  value       = module.alb.tg_arn
+  value       = module.alb.target_group_arn
 }
 
 output "ecs_cluster_id" {

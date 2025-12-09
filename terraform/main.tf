@@ -28,7 +28,7 @@ module "sg" {
   cidr_block = module.vpc.vpc_cidr_block
 }
 
-# alb
+# ALB
 module "alb" {
   source = "./modules/alb"
 
@@ -59,6 +59,7 @@ module "alb" {
   region = var.region
 }
 
+
 # iam
 module "iam" {
   source = "./modules/iam"
@@ -74,7 +75,9 @@ module "ecs" {
   private_subnet_ids   = module.vpc.private_subnet_ids
   ecs_security_group_id = module.sg.ecs_sg_id
   vpc_id = module.vpc.vpc_id
-  tg_arn             = module.alb.tg_arn
+
+  tg_arn = module.alb.target_group_arn
+
   execution_role_arn = module.iam.execution_role_arn
   task_role_arn      = module.iam.task_role_arn
 
@@ -85,7 +88,8 @@ module "ecs" {
 
   tags = var.common_tags
   alb_security_group_id = module.sg.alb_sg_id
-  alb_target_group_arn = module.alb.tg_arn
+  alb_target_group_arn = module.alb.target_group_arn
+
   region = var.region
   ecs_cpu = var.ecs_cpu
   ecs_memory = var.ecs_memory

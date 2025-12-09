@@ -159,7 +159,8 @@ variable "san_domains" {
 
 variable "cloudflare_api_token" {
   description = "token for cloudflare"
-  type  = string
+  sensitive = true
+  type = string
 
 }
 variable "tags" {
