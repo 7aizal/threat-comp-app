@@ -1,4 +1,4 @@
-# Threat Composer App — 
+# Threat Composer App 
 ## Cloud-Native Deployment on AWS ECS 
 
 <img width="535" alt="architecture" src="https://github.com/user-attachments/assets/da59c9f0-17c2-40ce-b7af-31610d14a3df" />
