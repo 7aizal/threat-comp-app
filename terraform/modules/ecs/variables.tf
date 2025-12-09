@@ -68,3 +68,16 @@ variable "region" {
   type        = string
   description = "AWS region"
 }
+
+variable "ecs_cpu" {
+  description = "CPU units for the ecs task"
+  type = number
+  default = "256"
+  
+}
+variable "ecs_memory" {
+  type = number
+  description = "Memory for the ECS task"
+  default = "512"
+  
+}
