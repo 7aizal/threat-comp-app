@@ -10,13 +10,17 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AWS_REGION: eu-west-2
+
 jobs:
   terraform-plan:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -24,27 +28,28 @@ jobs:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.6
+      - name: Write terraform.tfvars
+        working-directory: ./terraform
+        run: |
+          cat <<EOF > terraform.tfvars
+          region = "eu-west-2"
+
+          cloudflare_zone_id     = "8dbeaf5a7eca46cc066c0a03b0d1a402"
+          domain_name            = "tm.fazops.com"
+          record_name            = "tm"
+
+          # Cloudflare token from secrets
+          cloudflare_api_token = "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+
+          EOF
 
       - name: Terraform Init
-        working-directory: ./terraform
-        run: terraform init
+        uses: hashicorp/setup-terraform@v2
 
-      - name: Trivy IaC Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: config
-          scan-ref: ./terraform
-          severity: HIGH,CRITICAL
-          exit-code: '0'
-          format: table
+      - name: Init Terraform
+        working-directory: ./terraform
+        run: terraform init -input=false
 
       - name: Terraform Plan
         working-directory: ./terraform
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.TF_VAR_cloudflare_api_token }}
-        run: terraform plan
+        run: terraform plan -var-file=terraform.tfvars
