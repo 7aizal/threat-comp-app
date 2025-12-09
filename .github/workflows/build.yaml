@@ -7,8 +7,9 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_REGION: eu-west-2
   ECR_REPOSITORY: threatcomp-app
+  AWS_ACCOUNT_ID: 598130604507
 
 jobs:
   build-and-push:
@@ -18,41 +19,48 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
+          aws-region: eu-west-2
 
+      
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      
       - name: Ensure ECR Repository Exists
-        id: ensure-ecr
         run: |
           aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
           aws ecr create-repository --repository-name $ECR_REPOSITORY
 
-      - name: Get ECR URI
-        id: ecr
-        run: |
-          URI=$(aws ecr describe-repositories \
-            --repository-names $ECR_REPOSITORY \
-            --query 'repositories[0].repositoryUri' \
-            --output text)
-
-          echo "ECR_URI=$URI" >> $GITHUB_ENV
-
+      
       - name: Build Docker Image
         run: docker build -t $ECR_REPOSITORY:latest ./app
 
-      - name: Tag Docker Image
-        run: docker tag $ECR_REPOSITORY:latest $ECR_URI:latest
+      
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: threatcomp-app:latest
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
 
+      
+      - name: Tag Docker Image
+        run: |
+          docker tag $ECR_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+      
       - name: Push Docker Image
-        run: docker push $ECR_URI:latest
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
       - name: Output Image URI
         run: |
-          echo "Pushed image: $ECR_URI:latest"
+          echo "Pushed image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest"

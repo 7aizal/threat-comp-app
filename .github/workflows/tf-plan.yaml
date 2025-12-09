@@ -12,32 +12,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      # ---------- OIDC Auth ----------
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
+          aws-region: eu-west-2
 
-      - name: Create terraform.tfvars from secret
+      # ---------- Create TF Vars ----------
+      - name: Create terraform.tfvars
         working-directory: ./terraform
         run: |
-          cat <<'EOF' > terraform.tfvars
+          cat << 'EOF' > terraform.tfvars
           ${{ secrets.TF_VARS }}
           EOF
 
+      # ---------- Setup Terraform ----------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.6
 
+      # ---------- Terraform Init ----------
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
 
+      # ---------- Trivy IaC Scan ----------
+      - name: Trivy IaC Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: ./terraform
+          severity: HIGH,CRITICAL
+          exit-code: '0'
+          format: table
+
+      # ---------- Terraform Plan ----------
       - name: Terraform Plan
         working-directory: ./terraform
         run: terraform plan -var-file=terraform.tfvars
