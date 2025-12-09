@@ -47,8 +47,10 @@ This mirrors real production architectures used by engineering teams across the 
 ## 🧩 High-Level Architecture
 <img width="1304" alt="diagram" src="https://github.com/user-attachments/assets/c923a7be-d24c-4971-9264-9d9313e19664" />
 
-AWS Components:
-<img width="800" height="441" alt="image" src="https://github.com/user-attachments/assets/0fa92332-46d6-4e59-8f27-d19db1b64c87" />
+## AWS Components:
+
+<img width="1289" height="714" alt="image" src="https://github.com/user-attachments/assets/218946bc-0b59-41e6-be42-1c8ae93bb9bb" />
+
 
 
 ### Networking / VPC
