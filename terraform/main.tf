@@ -32,9 +32,9 @@ module "sg" {
 module "alb" {
   source = "./modules/alb"
 
-  alb_name            = var.alb_name
-  internal            = var.internal
-  load_balancer_type  = var.load_balancer_type
+  alb_name             = var.alb_name
+  internal             = var.internal
+  load_balancer_type   = var.load_balancer_type
 
   vpc_id               = module.vpc.vpc_id
   public_subnet_ids    = module.vpc.public_subnet_ids
@@ -53,11 +53,9 @@ module "alb" {
   healthy_threshold       = var.healthy_threshold
   unhealthy_threshold     = var.unhealthy_threshold
 
-  listener_port       = var.listener_port
-  listener_protocol   = var.listener_protocol
-  default_action_type = var.default_action_type
+  acm_certificate_arn = var.acm_certificate_arn
 
-  tags = var.common_tags
+  tags   = var.common_tags
   region = var.region
 }
 

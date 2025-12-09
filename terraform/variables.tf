@@ -170,9 +170,26 @@ variable "tags" {
   }
 }
 
+variable "acm_certificate_arn" {
+  type = string
+}
 
 
 variable "common_tags" {
   description = "Common tags for all resources"
   type = map(string)
+}
+
+variable "ecs_cpu" {
+  type = number
+}
+
+variable "ecs_memory" {
+  type = number
+}
+
+
+variable "app_bucket_name" {
+  description = "S3 bucket used by the ECS application"
+  type        = string
 }
