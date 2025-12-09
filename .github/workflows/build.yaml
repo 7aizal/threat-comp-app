@@ -6,6 +6,11 @@ on:
       - deployment
   workflow_dispatch:
 
+# REQUIRED FOR OIDC
+permissions:
+  id-token: write
+  contents: read
+
 env:
   AWS_REGION: eu-west-2
   ECR_REPOSITORY: threatcomp-app
@@ -19,28 +24,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      
       - name: Ensure ECR Repository Exists
         run: |
           aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
           aws ecr create-repository --repository-name $ECR_REPOSITORY
 
-      
       - name: Build Docker Image
         run: docker build -t $ECR_REPOSITORY:latest ./app
 
-      
       - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -50,13 +50,11 @@ jobs:
           ignore-unfixed: true
           format: table
 
-      
       - name: Tag Docker Image
         run: |
           docker tag $ECR_REPOSITORY:latest \
             $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
-      
       - name: Push Docker Image
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest

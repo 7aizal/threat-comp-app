@@ -1,57 +1,59 @@
-name: Terraform Plan
+name: Build and Push Docker Image
 
 on:
-  workflow_run:
-    workflows: ["Build and Push Docker Image"]
-    types:
-      - completed
+  push:
+    branches:
+      - deployment
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+  ECR_REPOSITORY: threatcomp-app
+  AWS_ACCOUNT_ID: 598130604507
 
 jobs:
-  terraform-plan:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # ---------- OIDC Auth ----------
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      # ---------- Create TF Vars ----------
-      - name: Create terraform.tfvars
-        working-directory: ./terraform
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR Repository Exists
         run: |
-          cat << 'EOF' > terraform.tfvars
-          ${{ secrets.TF_VARS }}
-          EOF
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY || \
+          aws ecr create-repository --repository-name $ECR_REPOSITORY
 
-      # ---------- Setup Terraform ----------
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.6
+      - name: Build Docker image
+        run: docker build -t $ECR_REPOSITORY:latest ./app
 
-      # ---------- Terraform Init ----------
-      - name: Terraform Init
-        working-directory: ./terraform
-        run: terraform init
-
-      # ---------- Trivy IaC Scan ----------
-      - name: Trivy IaC Scan
+      - name: Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: config
-          scan-ref: ./terraform
+          image-ref: threatcomp-app:latest
           severity: HIGH,CRITICAL
-          exit-code: '0'
+          exit-code: '1'
+          ignore-unfixed: true
           format: table
 
-      # ---------- Terraform Plan ----------
-      - name: Terraform Plan
-        working-directory: ./terraform
-        run: terraform plan -var-file=terraform.tfvars
+      - name: Tag image
+        run: |
+          docker tag $ECR_REPOSITORY:latest \
+            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+      - name: Push image
+        run: |
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
