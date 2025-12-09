@@ -3,8 +3,7 @@ name: Terraform Plan
 on:
   workflow_run:
     workflows: ["Build and Push Docker Image"]
-    types:
-      - completed
+    types: [completed]
 
 permissions:
   id-token: write
@@ -19,8 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -28,25 +26,20 @@ jobs:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      - name: Write terraform.tfvars
+      - name: Write terraform.tfvars from Secret
         working-directory: ./terraform
         run: |
-          cat <<EOF > terraform.tfvars
-          region = "eu-west-2"
+          echo "${{ secrets.TF_VARS }}" > terraform.tfvars
 
-          cloudflare_zone_id     = "8dbeaf5a7eca46cc066c0a03b0d1a402"
-          domain_name            = "tm.fazops.com"
-          record_name            = "tm"
+      - name: Inject Cloudflare Token
+        working-directory: ./terraform
+        run: |
+          sed -i 's|cloudflare_api_token = ""|cloudflare_api_token = "${{ secrets.CLOUDFLARE_API_TOKEN }}"|' terraform.tfvars
 
-          # Cloudflare token from secrets
-          cloudflare_api_token = "${{ secrets.CLOUDFLARE_API_TOKEN }}"
-
-          EOF
-
-      - name: Terraform Init
+      - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Init Terraform
+      - name: Terraform Init
         working-directory: ./terraform
         run: terraform init -input=false
 
