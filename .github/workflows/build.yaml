@@ -6,22 +6,21 @@ on:
       - deployment
   workflow_dispatch:
 
-# REQUIRED FOR OIDC
 permissions:
   id-token: write
   contents: read
 
 env:
   AWS_REGION: eu-west-2
-  ECR_REPOSITORY: threatcomp-app
   AWS_ACCOUNT_ID: 598130604507
+  ECR_REPOSITORY: threatcomp-app
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Configure AWS Credentials (OIDC)
@@ -44,10 +43,10 @@ jobs:
       - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: threatcomp-app:latest
+          image-ref: ${{ env.ECR_REPOSITORY }}:latest
           severity: HIGH,CRITICAL
-          exit-code: '1'
           ignore-unfixed: true
+          exit-code: '1'
           format: table
 
       - name: Tag Docker Image
@@ -58,7 +57,3 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
-
-      - name: Output Image URI
-        run: |
-          echo "Pushed image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
