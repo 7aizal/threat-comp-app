@@ -3,7 +3,8 @@
 
 <img width="535" alt="architecture" src="https://github.com/user-attachments/assets/da59c9f0-17c2-40ce-b7af-31610d14a3df" />
 
-This repository contains a full production-grade deployment pipeline and cloud architecture for hosting the Threat Composer application on AWS ECS Fargate using Terraform, GitHub Actions, ECR, Cloudflare, and multi-AZ networking.
+This repository contains a full production-grade deployment pipeline and cloud architecture for hosting the Threat Composer application on AWS ECS Fargate using Terraform, GitHub Actions with OIDC, ECR, Cloudflare, and multi-AZ networking.
+
 
 The goal of this project is to demonstrate modern DevOps engineering through:
 
@@ -20,6 +21,9 @@ The goal of this project is to demonstrate modern DevOps engineering through:
 * HTTPS with ACM + Cloudflare DNS
 
 * Multi-AZ resilience
+
+* OIDC-based authentication from GitHub Actions to AWS (no long-lived IAM keys)
+
 
 ## 🚀 Project Overview
 
@@ -194,6 +198,8 @@ Prevents AWS cost leakage
 
 * GitHub Secrets used for all sensitive data
 
+
+
 ## To Run Locally
 
 In order to run the app locally, using Dockerhub for development and further testing, 
@@ -227,7 +233,8 @@ This project demonstrates:
 
 * End-to-end container lifecycle automation
 
-* It serves as a complete DevOps portfolio project showcasing cloud architecture and automation expertise.
+* * Production-ready CI/CD pipelines using GitHub OIDC (no AWS keys)
+
 
 ## ✔️ Verified Functionality
 
@@ -246,5 +253,8 @@ This project demonstrates:
 * Multi-AZ routing operational
 
 * Full CI/CD Automation Complete
+
+* GitHub Actions OIDC used for AWS access (no IAM keys in repo); GitHub Secrets only for non-AWS sensitive config (e.g. terraform tfvars)
+
 
 MIT License - AWS OPEN SOURCE TOOL, Feel free to use. 
