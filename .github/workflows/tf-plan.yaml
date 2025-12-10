@@ -18,8 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -27,12 +26,69 @@ jobs:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      # Terraform.tfvars ALREADY EXISTS IN YOUR REPO
-      # We only inject the Cloudflare token into it
-      - name: Inject Cloudflare Token into tfvars
+      - name: Write terraform.tfvars
         working-directory: ./terraform
         run: |
-          sed -i "s|cloudflare_api_token = \"\"|cloudflare_api_token = \"${{ secrets.CLOUDFLARE_API_TOKEN }}\"|" terraform.tfvars
+          cat > terraform.tfvars <<EOF
+          region = "eu-west-2"
+
+          cloudflare_zone_id = "8dbeaf5a7eca46cc066c0a03b0d1a402"
+          domain_name = "tm.fazops.com"
+          record_name = "tm"
+          record_type = "CNAME"
+          evaluate_target_health = false
+
+          cloudflare_api_token = "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+
+          # Networking
+          vpc_cidr_block = "10.0.0.0/16"
+          public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+          private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+          public_subnet_azs = ["eu-west-2a", "eu-west-2b"]
+          private_subnet_azs = ["eu-west-2a", "eu-west-2b"]
+
+          # ALB
+          alb_name = "threat-comp-alb"
+          internal = false
+          load_balancer_type = "application"
+
+          tg_name = "threat-comp-tg"
+          tg_port = 80
+          tg_protocol = "HTTP"
+          target_type = "ip"
+
+          listener_port = 443
+          listener_protocol = "HTTPS"
+          default_action_type = "forward"
+
+          health_check_path = "/"
+          health_check_protocol = "HTTP"
+          matcher = "200"
+          health_check_interval = 30
+          health_check_timeout = 5
+          healthy_threshold = 2
+          unhealthy_threshold = 2
+
+          acm_certificate_arn = "arn:aws:acm:eu-west-2:598130604507:certificate/a1c0f1d0-30ae-45f3-bb72-0e4e6286023f"
+
+          # ECS
+          cluster_name = "threat-comp-cluster"
+          container_name = "app"
+          container_image = "598130604507.dkr.ecr.eu-west-2.amazonaws.com/threatcomp-app:latest"
+          container_port = 3000
+          desired_count = 1
+          ecs_cpu = 256
+          ecs_memory = 512
+
+          # S3
+          s3_bucket_name = "threat-comp-app-bucket"
+          app_bucket_name = "threat-comp-app-bucket"
+
+          common_tags = {
+            Project = "threat-comp"
+            Environment = "prod"
+          }
+          EOF
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
