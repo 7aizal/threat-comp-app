@@ -18,29 +18,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      - name: Create terraform.tfvars
+      - name: Create terraform.tfvars (safe variables only)
         working-directory: ./terraform
-        run: echo "${{ secrets.TF_VARS }}" > terraform.tfvars
+        run: |
+          cat > terraform.tfvars <<EOF
+          region = "eu-west-2"
+
+          # Cloudflare DNS (zone + record name are safe)
+          cloudflare_zone_id     = "8dbeaf5a7eca46cc066c0a03b0d1a402"
+          domain_name            = "tm.fazops.com"
+          record_name            = "tm"
+          record_type            = "CNAME"
+          evaluate_target_health = false
+
+          # Sensitive secret injected separately as -var
+          cloudflare_api_token = ""
+
+          # ACM Certificate ARN (public)
+          acm_certificate_arn = "${{ secrets.ACM_CERT_ARN }}"
+
+          # ECS Image (public)
+          container_image = "${{ secrets.CONTAINER_IMAGE }}"
+
+          # S3 application bucket
+          app_bucket_name = "${{ secrets.APP_BUCKET_NAME }}"
+          EOF
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
         working-directory: ./terraform
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: terraform init -input=false
 
       - name: Terraform Plan
         working-directory: ./terraform
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: terraform plan -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" -var-file=terraform.tfvars
+        run: terraform plan \
+               -var="cloudflare_api_token=${CLOUDFLARE_API_TOKEN}" \
+               -var-file=terraform.tfvars
