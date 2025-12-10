@@ -15,6 +15,5 @@ provider "aws" {
   region = var.region
 }
 provider "cloudflare" {
-  api_token = var.cloudflare_api_token != null ? var.cloudflare_api_token : ""
+  api_token = var.cloudflare_api_token
 }
-
