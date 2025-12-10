@@ -161,6 +161,7 @@ variable "cloudflare_api_token" {
   description = "token for cloudflare"
   sensitive = true
   type = string
+  default = null
 
 }
 variable "tags" {
