@@ -29,62 +29,6 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
-      # ⭐ CREATE terraform.tfvars dynamically
-      - name: Create terraform.tfvars
-        working-directory: ./terraform
-        run: |
-          cat > terraform.tfvars <<EOF
-          region = "eu-west-2"
-
-          vpc_cidr_block = "10.0.0.0/16"
-          public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
-          public_subnet_azs   = ["eu-west-2a", "eu-west-2b"]
-          private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
-          private_subnet_azs   = ["eu-west-2a", "eu-west-2b"]
-
-          domain_name = "tm.fazops.com"
-          cloudflare_zone_id = "8dbeaf5a7eca46cc066c0a03b0d1a402"
-          record_name = "tm"
-          record_type = "CNAME"
-          evaluate_target_health = false
-
-          alb_name           = "threat-comp-alb"
-          load_balancer_type = "application"
-          internal           = false
-
-          tg_name     = "threat-comp-tg"
-          tg_port     = 80
-          tg_protocol = "HTTP"
-          target_type = "ip"
-
-          listener_port     = 443
-          listener_protocol = "HTTPS"
-
-          health_check_path       = "/"
-          health_check_protocol   = "HTTP"
-          matcher                 = "200"
-          health_check_interval   = 30
-          health_check_timeout    = 5
-          healthy_threshold       = 2
-          unhealthy_threshold     = 2
-          default_action_type     = "forward"
-
-          acm_certificate_arn = "arn:aws:acm:eu-west-2:598130604507:certificate/a1c0f1d0-30ae-45f3-bb72-0e4e6286023f"
-
-          cluster_name    = "threat-comp-cluster"
-          container_name  = "app"
-          container_image = "598130604507.dkr.ecr.eu-west-2.amazonaws.com/threatcomp-app:latest"
-          container_port  = 3000
-          desired_count   = 1
-          ecs_cpu         = 256
-          ecs_memory      = 512
-
-          s3_bucket_name = "threat-comp-app-bucket"
-          app_bucket_name = "threat-comp-app-bucket"
-
-          cloudflare_api_token = ""
-          EOF
-
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init -input=false
@@ -93,4 +37,47 @@ jobs:
         working-directory: ./terraform
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: terraform plan -var="cloudflare_api_token=${CLOUDFLARE_API_TOKEN}" -var-file=terraform.tfvars
+        run: |
+          terraform plan \
+            -var="cloudflare_api_token=${CLOUDFLARE_API_TOKEN}" \
+            -var='region="eu-west-2"' \
+            -var='common_tags={Project="threat-comp",Environment="prod"}' \
+            -var='vpc_name="threat-comp-vpc"' \
+            -var='vpc_cidr_block="10.0.0.0/16"' \
+            -var='public_subnet_cidrs=["10.0.1.0/24","10.0.2.0/24"]' \
+            -var='public_subnet_azs=["eu-west-2a","eu-west-2b"]' \
+            -var='private_subnet_cidrs=["10.0.11.0/24","10.0.12.0/24"]' \
+            -var='private_subnet_azs=["eu-west-2a","eu-west-2b"]' \
+            -var='domain_name="tm.fazops.com"' \
+            -var='cloudflare_zone_id="8dbeaf5a7eca46cc066c0a03b0d1a402"' \
+            -var='record_name="tm"' \
+            -var='record_type="CNAME"' \
+            -var='evaluate_target_health=false' \
+            -var='alb_name="threat-comp-alb"' \
+            -var='load_balancer_type="application"' \
+            -var='internal=false' \
+            -var='tg_name="threat-comp-tg"' \
+            -var='tg_port=80' \
+            -var='tg_protocol="HTTP"' \
+            -var='target_type="ip"' \
+            -var='listener_port=443' \
+            -var='listener_protocol="HTTPS"' \
+            -var='health_check_path="/"' \
+            -var='health_check_protocol="HTTP"' \
+            -var='matcher="200"' \
+            -var='health_check_interval=30' \
+            -var='health_check_timeout=5' \
+            -var='healthy_threshold=2' \
+            -var='unhealthy_threshold=2' \
+            -var='default_action_type="forward"' \
+            -var='acm_certificate_arn="arn:aws:acm:eu-west-2:598130604507:certificate/a1c0f1d0-30ae-45f3-bb72-0e4e6286023f"' \
+            -var='cluster_name="threat-comp-cluster"' \
+            -var='container_name="app"' \
+            -var='container_image="598130604507.dkr.ecr.eu-west-2.amazonaws.com/threatcomp-app:latest"' \
+            -var='container_port=3000' \
+            -var='desired_count=1' \
+            -var='ecs_cpu=256' \
+            -var='ecs_memory=512' \
+            -var='s3_bucket_name="threat-comp-app-bucket"' \
+            -var='tags={Environment="prod",Project="threat-comp"}' \
+            -var='app_bucket_name="threat-comp-app-bucket"'
