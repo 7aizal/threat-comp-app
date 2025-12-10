@@ -18,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -26,12 +27,9 @@ jobs:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
           aws-region: eu-west-2
 
-      - name: Write terraform.tfvars from Secret
-        working-directory: ./terraform
-        run: |
-          printf "%s" "${{ secrets.TF_VARS }}" > terraform.tfvars
-
-      - name: Inject Cloudflare Token
+      # Terraform.tfvars ALREADY EXISTS IN YOUR REPO
+      # We only inject the Cloudflare token into it
+      - name: Inject Cloudflare Token into tfvars
         working-directory: ./terraform
         run: |
           sed -i "s|cloudflare_api_token = \"\"|cloudflare_api_token = \"${{ secrets.CLOUDFLARE_API_TOKEN }}\"|" terraform.tfvars
