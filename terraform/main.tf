@@ -106,14 +106,14 @@ module "acm" {
   region                    = var.region
 }
 
-# dns
-module "dns" {
-  source               = "./modules/dns"
-  zone_id              = var.cloudflare_zone_id
-  validation_records   = module.acm.domain_validation_options
-  cloudflare_api_token = var.cloudflare_api_token
+# dns 
+  module "dns" {
+   source               = "./modules/dns"
+   zone_id              = var.cloudflare_zone_id
+   validation_records   = module.acm.domain_validation_options
+   cloudflare_api_token = var.cloudflare_api_token
 
-}
+ }
 
 # s3 bucket
 module "s3" {
