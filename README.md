@@ -154,7 +154,7 @@ This mirrors real production architectures used by engineering teams across the 
   <img width="1810" height="738" alt="image" src="https://github.com/user-attachments/assets/8ac78749-599e-4e6f-91d0-db3efd482e88" />
 
 
-### 3. Terraform Apply (Manual Approval)
+### 3. Terraform Apply [Manual Trigger]
 
 * Deploys full infrastructure stack:
 
@@ -173,7 +173,7 @@ Cloudflare DNS
 <img width="1500" height="837" alt="image" src="https://github.com/user-attachments/assets/ebe067cb-6ab0-4f14-8d8b-33867458b550" />
 
 
-### 4. Terraform Destroy (Manual Input “DESTROY”)
+### 4. Terraform Destroy [Manual Trigger]
 
 Safely tears everything down
 
@@ -199,6 +199,61 @@ Prevents AWS cost leakage
 
 * GitHub Secrets used for all sensitive data
 
+## Terraform State Import (Existing Infrastructure Adoption)
+
+During development, previously deployed AWS resources (ALB, Target Group, ACM cert, IAM roles) were imported into Terraform state using terraform import.
+This ensures Terraform manages all cloud resources consistently.
+
+```bash
+terraform import module.alb.aws_lb.alb arn:aws:elasticloadbalancing:eu-west-2:ACCOUNT_ID:loadbalancer/app/threat-comp-alb/XYZ
+```
+
+## Two-phase Terraform Apply (because of Cloudflare + ACM)
+
+Your deployment required:
+
+* First apply WITHOUT the DNS module
+
+* After ACM validation record appears, enable DNS module and apply again
+
+### Two-Phase Apply for ACM DNS Validation
+
+Because ACM DNS validation depends on Cloudflare DNS records, deployment is done in two phases:
+
+* Deploy infrastructure without dns module enabled
+
+* Once ACM outputs validation records, enable the dns module
+
+* Run terraform apply again to create Cloudflare DNS records
+
+* This avoids cyclic dependencies between ACM and Cloudflare.
+Cloudflare Duplicate DNS Record Fix
+
+You had to delete Cloudflare's automatically created _acme-challenge record.
+
+### Cloudflare Duplicate DNS Record Fix
+
+You had to delete Cloudflare's automatically created _acme-challenge record.
+
+### Cloudflare DNS Considerations
+
+Cloudflare may auto-generate previous _acme-challenge records from past certificates.
+These must be deleted before Terraform creates new ACM validation records, otherwise Terraform will return:
+```bash
+An A, AAAA, or CNAME record with that host already exists.
+```
+
+
+Once deployed, the application is available at:
+
+## https://tm.fazops.com
+
+Cloudflare creates a CNAME pointing to:
+```bash
+threat-comp-alb-850082577.eu-west-2.elb.amazonaws.com
+```
+
+HTTPS termination is handled at the ALB using an ACM certificate.
 
 
 ## To Run Locally
