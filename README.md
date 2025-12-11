@@ -181,6 +181,11 @@ Prevents AWS cost leakage
 <img width="1498" height="688" alt="image" src="https://github.com/user-attachments/assets/33cfddbc-532d-41cc-a91d-66b42563de19" />
 
 
+### Demo
+
+[![Watch the video](https://cdn.loom.com/sessions/thumbnails/d6e7321b1caa4f73a9aa6b0132a3daaf-with-play.gif)](https://www.loom.com/share/d6e7321b1caa4f73a9aa6b0132a3daaf)
+
+
 ## 🔐 Security Best Practices Implemented
 
 * Compute workloads isolated in private subnets
@@ -314,3 +319,4 @@ This project demonstrates:
 
 
 MIT License - AWS OPEN SOURCE TOOL, Feel free to use. 
+
