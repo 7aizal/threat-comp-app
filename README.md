@@ -143,7 +143,8 @@ This mirrors real production architectures used by engineering teams across the 
 
 * Outputs image URI
 
-  <img width="1503" height="701" alt="image" src="https://github.com/user-attachments/assets/0ab520e1-0149-4951-837c-c6012b654931" />
+<img width="1476" height="845" alt="image" src="https://github.com/user-attachments/assets/ccf31f50-d22a-448b-be0e-ddd24a9bbc65" />
+
 
 
 ### 2. Terraform Plan
@@ -151,7 +152,8 @@ This mirrors real production architectures used by engineering teams across the 
 * Runs automatically after build
 
 * Shows changes before deployment
-  <img width="1810" height="738" alt="image" src="https://github.com/user-attachments/assets/8ac78749-599e-4e6f-91d0-db3efd482e88" />
+  <img width="1512" height="639" alt="image" src="https://github.com/user-attachments/assets/f28fb8bc-9d95-4c0e-867e-0fadb262dbf7" />
+
 
 
 ### 3. Terraform Apply [Manual Trigger]
@@ -170,7 +172,8 @@ ACM Cert
 
 Cloudflare DNS
 
-<img width="1500" height="837" alt="image" src="https://github.com/user-attachments/assets/ebe067cb-6ab0-4f14-8d8b-33867458b550" />
+<img width="1494" height="685" alt="image" src="https://github.com/user-attachments/assets/4e033371-3ac1-42d9-a274-bcb27fe3da85" />
+
 
 
 ### 4. Terraform Destroy [Manual Trigger]
@@ -183,7 +186,6 @@ Prevents AWS cost leakage
 
 ### Demo
 
-[![Watch the video](https://cdn.loom.com/sessions/thumbnails/d6e7321b1caa4f73a9aa6b0132a3daaf-with-play.gif)](https://www.loom.com/share/d6e7321b1caa4f73a9aa6b0132a3daaf)
 
 
 ## 🔐 Security Best Practices Implemented
@@ -319,4 +321,5 @@ This project demonstrates:
 
 
 MIT License - AWS OPEN SOURCE TOOL, Feel free to use. 
+
 
