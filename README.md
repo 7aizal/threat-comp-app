@@ -186,7 +186,7 @@ Prevents AWS cost leakage
 
 ### Demo
 
-
+https://github.com/user-attachments/assets/564ecc4b-3288-404a-bd74-5b71e5b70d76
 
 ## 🔐 Security Best Practices Implemented
 
@@ -321,6 +321,7 @@ This project demonstrates:
 
 
 MIT License - AWS OPEN SOURCE TOOL, Feel free to use. 
+
 
 
 
