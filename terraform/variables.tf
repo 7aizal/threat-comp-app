@@ -2,7 +2,7 @@
 
 variable "region" {
   description = "AWS region to deploy resources into"
-  type = string
+  type        = string
 }
 
 
@@ -159,9 +159,9 @@ variable "san_domains" {
 
 variable "cloudflare_api_token" {
   description = "token for cloudflare"
-  sensitive = true
-  type = string
-  
+  sensitive   = true
+  type        = string
+
 
 }
 variable "tags" {
@@ -179,7 +179,7 @@ variable "acm_certificate_arn" {
 
 variable "common_tags" {
   description = "Common tags for all resources"
-  type = map(string)
+  type        = map(string)
 }
 
 variable "ecs_cpu" {

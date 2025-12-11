@@ -71,13 +71,13 @@ variable "region" {
 
 variable "ecs_cpu" {
   description = "CPU units for the ecs task"
-  type = number
-  default = "256"
-  
+  type        = number
+  default     = "256"
+
 }
 variable "ecs_memory" {
-  type = number
+  type        = number
   description = "Memory for the ECS task"
-  default = "512"
-  
+  default     = "512"
+
 }

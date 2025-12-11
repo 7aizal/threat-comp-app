@@ -1,7 +1,7 @@
 variable "domain_name" {
-    type = string
-    description = "The domain name to request the certificate for"
-  
+  type        = string
+  description = "The domain name to request the certificate for"
+
 }
 
 
@@ -22,4 +22,4 @@ variable "region" {
   description = "AWS region"
 }
 
-  
+

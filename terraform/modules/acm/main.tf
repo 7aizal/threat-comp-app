@@ -13,10 +13,10 @@ resource "aws_acm_certificate" "cert" {
 resource "aws_acm_certificate_validation" "cert_validation" {
   certificate_arn = aws_acm_certificate.cert.arn
 
-  
+
   validation_record_fqdns = [
     for dvo in aws_acm_certificate.cert.domain_validation_options :
     dvo.resource_record_name
   ]
 }
- # this is because im using cloudflare for my dns management, this allows acm to only need the fqdns from cloudflare, cloudflare in the dns module will handle the rest.
+# this is because im using cloudflare for my dns management, this allows acm to only need the fqdns from cloudflare, cloudflare in the dns module will handle the rest.

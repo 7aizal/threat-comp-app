@@ -5,7 +5,7 @@ output "certificate_arn" {
 
 output "domain_validation_options" {
   description = "Validation records (CNAME) required for DNS validation"
-  value       = [
+  value = [
     for dvo in aws_acm_certificate.cert.domain_validation_options :
     {
       domain_name           = dvo.domain_name
