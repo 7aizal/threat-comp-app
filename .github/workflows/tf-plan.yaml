@@ -42,10 +42,10 @@ jobs:
 
       - name: Inject Cloudflare token
         working-directory: terraform
-        run: |
-          sed -i 's|cloudflare_api_token = ""|cloudflare_api_token = "${CLOUDFLARE_API_TOKEN}"|' auto.tfvars
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          sed -i 's|cloudflare_api_token = ""|cloudflare_api_token = "${CLOUDFLARE_API_TOKEN}"|' auto.tfvars
 
       - name: Terraform Init
         working-directory: terraform
