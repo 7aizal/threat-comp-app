@@ -5,6 +5,8 @@ on:
     workflows: ["Build and Push Docker Image"]
     types: [completed]
 
+  workflow_dispatch:
+
 permissions:
   id-token: write
   contents: read
@@ -14,70 +16,49 @@ env:
 
 jobs:
   terraform-plan:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::598130604507:role/GitHubActions-Role
-          aws-region: eu-west-2
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.6
 
-      - name: Terraform Init
-        working-directory: ./terraform
-        run: terraform init -input=false
+      - name: Create auto.tfvars from TF_VARS secret
+        working-directory: terraform
+        run: |
+          echo "${{ secrets.TF_VARS }}" | base64 --decode > auto.tfvars
 
-      - name: Terraform Plan
-        working-directory: ./terraform
+      - name: Inject Cloudflare token
+        working-directory: terraform
+        run: |
+          sed -i 's|cloudflare_api_token = ""|cloudflare_api_token = "${CLOUDFLARE_API_TOKEN}"|' auto.tfvars
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          terraform plan \
-            -var="cloudflare_api_token=${CLOUDFLARE_API_TOKEN}" \
-            -var='region=eu-west-2' \
-            -var='common_tags={Project="threat-comp",Environment="prod"}' \
-            -var='vpc_name=threat-comp-vpc' \
-            -var='vpc_cidr_block=10.0.0.0/16' \
-            -var='public_subnet_cidrs=["10.0.1.0/24","10.0.2.0/24"]' \
-            -var='public_subnet_azs=["eu-west-2a","eu-west-2b"]' \
-            -var='private_subnet_cidrs=["10.0.11.0/24","10.0.12.0/24"]' \
-            -var='private_subnet_azs=["eu-west-2a","eu-west-2b"]' \
-            -var='domain_name=tm.fazops.com' \
-            -var='cloudflare_zone_id=8dbeaf5a7eca46cc066c0a03b0d1a402' \
-            -var='record_name=tm' \
-            -var='record_type=CNAME' \
-            -var='evaluate_target_health=false' \
-            -var='alb_name=threat-comp-alb' \
-            -var='load_balancer_type=application' \
-            -var='internal=false' \
-            -var='tg_name=threat-comp-tg' \
-            -var='tg_port=80' \
-            -var='tg_protocol=HTTP' \
-            -var='target_type=ip' \
-            -var='listener_port=443' \
-            -var='listener_protocol=HTTPS' \
-            -var='health_check_path=/' \
-            -var='health_check_protocol=HTTP' \
-            -var='matcher=200' \
-            -var='health_check_interval=30' \
-            -var='health_check_timeout=5' \
-            -var='healthy_threshold=2' \
-            -var='unhealthy_threshold=2' \
-            -var='default_action_type=forward' \
-            -var='acm_certificate_arn=arn:aws:acm:eu-west-2:598130604507:certificate/a1c0f1d0-30ae-45f3-bb72-0e4e6286023f' \
-            -var='cluster_name=threat-comp-cluster' \
-            -var='container_name=app' \
-            -var='container_image=598130604507.dkr.ecr.eu-west-2.amazonaws.com/threatcomp-app:latest' \
-            -var='container_port=3000' \
-            -var='desired_count=1' \
-            -var='ecs_cpu=256' \
-            -var='ecs_memory=512' \
-            -var='s3_bucket_name=threat-comp-app-bucket' \
-            -var='tags={Environment="prod",Project="threat-comp"}' \
-            -var='app_bucket_name=threat-comp-app-bucket'
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init -input=false
+
+      - name: Terraform Format
+        working-directory: terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform
+        run: terraform plan -var-file=auto.tfvars -input=false
