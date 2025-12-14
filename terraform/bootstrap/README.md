@@ -105,7 +105,7 @@ Bootstrap (Local State)
 
 Run these commands ONCE ONLY:
 
-cd terraform/backend-bootstrap
+cd terraform/bootstrap
 terraform init
 terraform apply
 
@@ -145,5 +145,6 @@ terraform init -reconfigure
 Terraform will ask:
 
 “Do you want to copy existing local state to S3?”
+
 
 ### 👉 Select YES.
